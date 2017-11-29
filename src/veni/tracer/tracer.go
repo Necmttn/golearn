@@ -25,10 +25,12 @@ func (t *tracer) Trace(a ...interface{}) {
 
 func (t *nilTracer) Trace(a ...interface{}) {}
 
+// creates new tracer
 func New(w io.Writer) Tracer {
 	return &tracer{out: w}
 }
 
+// creates nil tracer
 func Off() Tracer {
 	return &nilTracer{}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -30,6 +29,7 @@ func newRoom() *room {
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
+		tracer:  trace.Off(),
 	}
 }
 
@@ -38,12 +38,10 @@ func (r *room) run() {
 		select {
 		case client := <-r.join:
 			// joining
-			fmt.Println("someone join the room", client)
 			r.clients[client] = true
 			r.tracer.Trace("New client joined")
 		case client := <-r.leave:
 			// leaving
-			fmt.Println("someone leave the room", client)
 			delete(r.clients, client)
 			close(client.send)
 			r.tracer.Trace("Client left")
