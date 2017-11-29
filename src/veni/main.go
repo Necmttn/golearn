@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"text/template"
+	"veni/tracer"
 )
 
 type templateHandler struct {
@@ -28,6 +30,7 @@ func main() {
 	flag.Parse()
 	fmt.Println("main started")
 	r := newRoom()
+	r.tracer = trace.New(os.Stdout)
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/room", r)
 	// get the room going.

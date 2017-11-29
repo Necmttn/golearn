@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"veni/tracer"
 )
 
 type room struct {
@@ -17,6 +18,10 @@ type room struct {
 	leave chan *client
 
 	clients map[*client]bool
+
+	// tracer will recieve trace information of activity
+	// in the room.
+	tracer trace.Tracer
 }
 
 func newRoom() *room {
@@ -35,11 +40,13 @@ func (r *room) run() {
 			// joining
 			fmt.Println("someone join the room", client)
 			r.clients[client] = true
+			r.tracer.Trace("New client joined")
 		case client := <-r.leave:
 			// leaving
 			fmt.Println("someone leave the room", client)
 			delete(r.clients, client)
 			close(client.send)
+			r.tracer.Trace("Client left")
 		case msg := <-r.forward:
 			// forward message to all clients
 
@@ -47,10 +54,12 @@ func (r *room) run() {
 				select {
 				case client.send <- msg:
 					//send the message
+					r.tracer.Trace(" -- sent to client")
 				default:
 					// failed to send
 					delete(r.clients, client)
 					close(client.send)
+					r.tracer.Trace(" -- failed to send, cleaned up client")
 				}
 			}
 		}
