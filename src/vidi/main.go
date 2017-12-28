@@ -1,0 +1,157 @@
+package main
+
+import (
+	// "encoding/xml"
+	"encoding/xml"
+	"fmt"
+	"golang.org/x/net/html"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+)
+
+func getHref(t html.Token) (ok bool, href string) {
+	for _, a := range t.Attr {
+		if a.Key == "href" {
+			href = a.Val
+			ok = true
+		}
+	}
+
+	return
+}
+
+func crawl(url string, ch chan string, chFinished chan bool) {
+	resp, err := http.Get(url)
+
+	// notify when it's finish with this channel
+	defer func() {
+		chFinished <- true
+	}()
+
+	if err != nil {
+		fmt.Println("ERROR: Failed to crawl \"" + url + "\"")
+		return
+	}
+
+	b := resp.Body
+	defer b.Close() // close Body when the function returns
+	z := html.NewTokenizer(b)
+	for {
+		tt := z.Next()
+
+		switch {
+		case tt == html.ErrorToken:
+			// End of the document we're done.
+			return
+		case tt == html.StartTagToken:
+			t := z.Token()
+
+			isAnchor := t.Data == "a"
+
+			// filter anchors.
+			if !isAnchor {
+				continue
+			}
+			ok, url := getHref(t)
+			if !ok {
+				continue
+			}
+			// Make sure Url starts with http**
+
+			hasProto := strings.Index(url, "/watch") == 0
+			if hasProto {
+				// ch <- url
+				var sub string = getSub(url)
+				fmt.Println(sub)
+			}
+		}
+	}
+}
+
+func getVideoId(path string) string {
+	u, err := url.Parse(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	q := u.Query()
+	return q.Get("v")
+}
+
+func getSubUrl(id string) string {
+	s := "https://www.youtube.com/api/timedtext?v=k__Et4Y798Q&expire=1514370979&key=yttt1&asr_langs=it,es,ru,fr,ko,de,pt,nl,ja,en&signature=2910070525A69A926C9C8328EF89B1CB3C6FFF5B.4197307189657C64E6512021DFEFF252A48DBBFA&sparams=asr_langs,caps,v,expire&hl=tr_TR&caps=asr&lang=zh-TW&fmt=srv1&tlang=zh-Hans"
+	u, err := url.Parse(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	q := u.Query()
+	q.Set("v", id)
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+type Subs struct {
+	Items []sentence
+}
+
+type Sentence  struct {
+	t int
+	d int
+	content string
+}
+
+func getSub(path string) string {
+	id := getVideoId(path)
+	url := getSubUrl(id)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	b := resp.Body
+	defer b.Close() // close Body when the function rep
+	subs := Subs{}
+	if err := xml.NewEncoder(b).Decode(&subs); err != nil {
+		fmt.Printf("errpr: %v\n", err)
+	} else  if len(channel.Items) != {
+		item := channel.Items[0]
+		fmt.println("First title:", item.p)
+		fmt.println("First title:", item.d)
+		fmt.println("First title:", item.content)
+	}
+}
+
+
+func main() {
+	foundUrls := make(map[string]bool)
+	seedUrls := os.Args[1:]
+
+	// Channels
+	chUrls := make(chan string)
+	chFinished := make(chan bool)
+
+	// Kick off the crawl process (concurently)
+
+	for _, url := range seedUrls {
+		go crawl(url, chUrls, chFinished)
+	}
+
+	// Subscribe to both channels
+	for c := 0; c < len(seedUrls); {
+		select {
+		case url := <-chUrls:
+			foundUrls[url] = true
+		case <-chFinished:
+			c++
+		}
+	}
+	// we're done.
+
+	fmt.Println("\nFound", len(foundUrls), "unique urls:\n")
+	for url, _ := range foundUrls {
+		fmt.Println(" - " + url)
+	}
+	close(chUrls)
+	// Subscribe for subtitles
+}
