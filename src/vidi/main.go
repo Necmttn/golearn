@@ -92,14 +92,14 @@ func getSubUrl(id string) string {
 
 type Transcript struct {
 	XMLName xml.Name `xml:"transcript"`
-	text    []text   `xml:"text"`
+	Text    []text   `xml:"text"`
 }
 
 type text struct {
 	XMLName  xml.Name `xml:"text"`
-	start    string   `xml:"start,attr"`
-	dur      string   `xml:"dur,attr"`
-	sentence string   `,innerxml`
+	Start    string   `xml:"start,attr"`
+	Dur      string   `xml:"dur,attr"`
+	Sentence string   `xml:",innerxml"`
 }
 
 func getSub(path string) {
