@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "encoding/xml"
 	"encoding/xml"
 	"fmt"
 	"golang.org/x/net/html"
@@ -63,9 +62,8 @@ func crawl(url string, ch chan string, chFinished chan bool) {
 
 			hasProto := strings.Index(url, "/watch") == 0
 			if hasProto {
-				// ch <- url
-				var sub string = getSub(url)
-				fmt.Println(sub)
+				// ch <- getSub(url)
+				getSub(url)
 			}
 		}
 	}
@@ -81,7 +79,7 @@ func getVideoId(path string) string {
 }
 
 func getSubUrl(id string) string {
-	s := "https://www.youtube.com/api/timedtext?v=k__Et4Y798Q&expire=1514370979&key=yttt1&asr_langs=it,es,ru,fr,ko,de,pt,nl,ja,en&signature=2910070525A69A926C9C8328EF89B1CB3C6FFF5B.4197307189657C64E6512021DFEFF252A48DBBFA&sparams=asr_langs,caps,v,expire&hl=tr_TR&caps=asr&lang=zh-TW&fmt=srv1&tlang=zh-Hans"
+	s := "https://www.youtube.com/api/timedtext?v=k__Et4Y798Q&key=yttt1&asr_langs=it,es,ru,fr,ko,de,pt,nl,ja,en&signature=2910070525A69A926C9C8328EF89B1CB3C6FFF5B.4197307189657C64E6512021DFEFF252A48DBBFA&sparams=asr_langs,caps,v,expire&hl=tr_TR&caps=asr&lang=zh-TW&fmt=srv1&tlang=zh-Hans"
 	u, err := url.Parse(s)
 	if err != nil {
 		log.Fatal(err)
@@ -92,36 +90,43 @@ func getSubUrl(id string) string {
 	return u.String()
 }
 
-type Subs struct {
-	Items []sentence
+type Transcript struct {
+	XMLName xml.Name `xml:"transcript"`
+	text    []text   `xml:"text"`
 }
 
-type Sentence  struct {
-	t int
-	d int
-	content string
+type text struct {
+	XMLName  xml.Name `xml:"text"`
+	start    string   `xml:"start,attr"`
+	dur      string   `xml:"dur,attr"`
+	sentence string   `,innerxml`
 }
 
-func getSub(path string) string {
+func getSub(path string) {
 	id := getVideoId(path)
 	url := getSubUrl(id)
+	fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
-	b := resp.Body
-	defer b.Close() // close Body when the function rep
-	subs := Subs{}
-	if err := xml.NewEncoder(b).Decode(&subs); err != nil {
-		fmt.Printf("errpr: %v\n", err)
-	} else  if len(channel.Items) != {
-		item := channel.Items[0]
-		fmt.println("First title:", item.p)
-		fmt.println("First title:", item.d)
-		fmt.println("First title:", item.content)
-	}
-}
+	// f, err := os.Create("./subs/" + id + ".xml")
 
+	// defer f.Close()
+	// resp.Write(f)
+	b := resp.Body
+	defer b.Close()
+	v := Transcript{}
+	xml.NewDecoder(b).Decode(&v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+	}
+
+	fmt.Printf("result")
+	fmt.Println(v)
+	// return transcript
+	return
+}
 
 func main() {
 	foundUrls := make(map[string]bool)
@@ -152,6 +157,7 @@ func main() {
 	for url, _ := range foundUrls {
 		fmt.Println(" - " + url)
 	}
+
 	close(chUrls)
 	// Subscribe for subtitles
 }
