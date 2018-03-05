@@ -1,4 +1,4 @@
-package main
+package reverseinteger
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func main() {
 /**
 * this one is about 20ms which is way slow compare to next one
  */
-func reverse(x int) int {
+func Reverse(x int) int {
 	t := strconv.Itoa(x)
 	a := s.Split(t, "")
 	isMinus := false
@@ -43,7 +43,7 @@ func reverse(x int) int {
 }
 
 // Faster
-func reverseFast(x int) int {
+func ReverseFast(x int) int {
 	var ret int
 	var sign = x < 0 //  let's check the number given is negative or not.
 
