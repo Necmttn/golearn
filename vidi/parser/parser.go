@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	// "reflect"
 )
 
 type XMLTranscript struct {
@@ -38,11 +37,6 @@ func ParseFile(p string) XMLTranscript {
 	var altyazi XMLTranscript
 	err = xml.Unmarshal(byteValue, &altyazi)
 	check(err)
-	fmt.Println(len(altyazi.Texts))
-	for i := 0; i < len(altyazi.Texts); i++ {
-		fmt.Println("Start: " + altyazi.Texts[i].Start)
-		fmt.Println("Context: " + altyazi.Texts[i].Context)
-		fmt.Println("Dur: " + altyazi.Texts[i].Dur)
-	}
+	fmt.Println("Number of Lines: ", len(altyazi.Texts))
 	return altyazi
 }
