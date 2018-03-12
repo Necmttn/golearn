@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/Necmttn/golearn/vidi/parser"
 	"golang.org/x/net/html"
 	"log"
 	"net/http"

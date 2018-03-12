@@ -1,44 +1,48 @@
-package main
+package parser
 
 import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
+	// "reflect"
 )
 
-type transcript struct {
-	XMLName xml.Name `xml:"transcript"`
-	text    []text   `xml:"text"`
+type XMLTranscript struct {
+	XMLName xml.Name  `xml:"transcript"`
+	Texts   []XMLText `xml:"text"`
 }
 
-type text struct {
+type XMLText struct {
 	XMLName xml.Name `xml:"text"`
-	start   string   `xml:"start, attr"`
-	dur     string   `xml:"dur, attr"`
+	Context string   `xml:",innerxml"`
+	Start   string   `xml:"start,attr"`
+	Dur     string   `xml:"dur,attr"`
 }
 
-func main() {
-	file, err := os.open("../test.xml")
-	if err != nil {
-		fmt.printf("error: %v", err)
-		return
+func check(e error) {
+	if e != nil {
+		panic(e)
 	}
-	defer file.close()
-	data, err := ioutil.readall(file)
+}
 
-	if err != nil {
-		fmt.printf("error: %v", err)
-		return
+func ParseFile(p string) XMLTranscript {
+	// data, err := ioutil.ReadFile(p)
+	xmlFile, err := os.Open(p)
+	check(err)
+	fmt.Println("Successuflly Opened", p)
+	defer xmlFile.Close()
+	byteValue, err := ioutil.ReadAll(xmlFile)
+	check(err)
+	// fmt.Printf("%s", data)
+	var altyazi XMLTranscript
+	err = xml.Unmarshal(byteValue, &altyazi)
+	check(err)
+	fmt.Println(len(altyazi.Texts))
+	for i := 0; i < len(altyazi.Texts); i++ {
+		fmt.Println("Start: " + altyazi.Texts[i].Start)
+		fmt.Println("Context: " + altyazi.Texts[i].Context)
+		fmt.Println("Dur: " + altyazi.Texts[i].Dur)
 	}
-	v := recurlyservers{}
-
-	err = xml.unmarshal(data, &v)
-
-	if err != nil {
-		fmt.printf("error: %v", err)
-		return
-	}
-
-	fmt.println(v)
+	return altyazi
 }
